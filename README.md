@@ -1,148 +1,1449 @@
-"""
-PANDORA - Sistema Especialista em Sobrevivência e Primeiros Socorros
-Versão 3.0 - Inteligência Artificial Especializada
-Baseado em: FM 3-05.70, SAS Survival Handbook, Red Cross First Aid Manual, Army Field Manual 21-76
-"""
-
-import random
-import numpy as np
-import gymnasium as gym
-from gymnasium import spaces
-from typing import Tuple, Dict, Any, Optional, List, Callable
-from enum import Enum, IntEnum
-import logging
-from dataclasses import dataclass, field
-import json
-from datetime import datetime
-from collections import deque, defaultdict
-import hashlib
-import re
-import textwrap
-
-# Configuração de logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger("PANDORA")
-
-# ============================================================================
-# MANUAL COMPLETO DE PRIMEIROS SOCORROS - EXPANDIDO
-# ============================================================================
-
-class FirstAidManual:
-    """Manual completo de primeiros socorros baseado em protocolos internacionais"""
-    
-    # Seção 1: Protocolo ABCDE (Avaliação Primária)
-    ABCDE_PROTOCOL = {
-        'A': {
-            'name': 'Airway (Via Aérea)',
-            'steps': [
-                'Verificar obstruções',
-                'Manter coluna cervical alinhada',
-                'Inclinação da cabeça e elevação do queixo',
-                'Aspirar secreções se necessário'
-            ],
-            'signs_of_problem': [
-                'Respiração ruidosa',
-                'Ronco, estridor, gorgolejo',
-                'Cianose (lábios azulados)'
-            ]
-        },
-        'B': {
-            'name': 'Breathing (Respiração)',
-            'steps': [
-                'Olhar, Ouvir e Sentir por 10 segundos',
-                'Verificar frequência respiratória (normal: 12-20/min)',
-                'Avaliar profundidade e ritmo',
-                'Verificar uso de músculos acessórios'
-            ],
-            'emergency_measures': [
-                'Ventilação de resgate se não respira',
-                'Oxigênio suplementar se disponível'
-            ]
-        },
-        'C': {
-            'name': 'Circulation (Circulação)',
-            'steps': [
-                'Verificar pulso carotídeo por 10 segundos',
-                'Avaliar perfusão (tempo de enchimento capilar <2s)',
-                'Verificar sangramentos ativos',
-                'Monitorar pressão arterial se possível'
-            ],
-            'critical_signs': [
-                'Pulso ausente ou fraco',
-                'Pele pálida, úmida e fria',
-                'Sangramento arterial (jatos pulsáteis)'
-            ]
-        },
-        'D': {
-            'name': 'Disability (Deficiência Neurológica)',
-            'steps': [
-                'Avaliar nível de consciência (AVPU)',
-                'Verificar pupilas (tamanho, reação, igualdade)',
-                'Avaliar função motora (movimento dos membros)',
-                'Verificar sensibilidade'
-            ],
-            'avpu_scale': {
-                'A': 'Alert (Alerta)',
-                'V': 'Voice (Responde à voz)',
-                'P': 'Pain (Responde à dor)',
-                'U': 'Unresponsive (Não responsivo)'
-            }
-        },
-        'E': {
-            'name': 'Exposure/Environment (Exposição/Ambiente)',
-            'steps': [
-                'Examinar completamente o corpo',
-                'Manter temperatura corporal',
-                'Proteger do ambiente',
-                'Prevenir hipotermia/hipertermia'
-            ]
-        }
-    }
-    
-    # Seção 2: Controle de Hemorragias
-    BLEEDING_CONTROL = {
-        'DIRECT_PRESSURE': {
-            'technique': 'Pressão direta sobre o ferimento',
-            'steps': [
-                'Usar luvas ou barreira se disponível',
-                'Aplicar gaze estéril ou pano limpo',
-                'Manter pressão constante por 10-15 minutos',
-                'Não remover gaze - adicionar mais se encharcar'
-            ],
-            'indications': 'Sangramento leve a moderado'
-        },
-        'ELEVATION': {
-            'technique': 'Elevação do membro',
-            'steps': [
-                'Elevar ferimento acima do nível do coração',
-                'Combinar com pressão direta',
-                'Manter posição elevada'
-            ],
-            'indications': 'Sangramento em extremidades'
-        },
-        'PRESSURE_POINTS': {
-            'technique': 'Pontos de pressão arterial',
-            'points': {
-                'brachial': 'Parte interna do braço (sangramento braquial)',
-                'femoral': 'Virilha (sangramento femoral)'
-            },
-            'warning': 'Não usar por mais de 10 minutos'
-        },
-        'TOURNIQUET': {
-            'technique': 'Torniquete - ÚLTIMO RECURSO',
-            'steps': [
-                'Aplicar 2-3 polegadas acima do ferimento (não sobre articulação)',
-                'Apertar até parar sangramento',
-                'Registrar hora de aplicação',
-                'NÃO REMOVER - apenas profissional médico remove'
-            ],
-            'indications': 'Sangramento arterial incontrolável, amputação traumática'
-        }
-    }
-    
-    # Seção 3: Queimaduras
     BURN_TREATMENT = {
-        'FIRST_DEGREE': {
+ # ============================================================================
+# PANDORA ENHANCED ULTIMATE - Sistema de Primeiros Socorros Offline
+# Criado por: Alexander Chrysostomo Dias
+# Versão: 2.0 (Completa e Robusta)
+# Data: 2025
+# ============================================================================
+# 
+# CARACTERÍSTICAS:
+# - Totalmente offline (funciona sem internet)
+# - Compatível com smartphones e computadores
+# - Interface melhorada e intuitiva
+# - Protocolos atualizados AHA 2025
+# - Sistema de diagnóstico inteligente
+# - Modo de treinamento prático
+# - Banco de dados local de emergências
+# - Sistema de salvamento automático
+# ============================================================================
+
+import json
+import os
+import sys
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
+import hashlib
+
+# ============================================================================
+# CLASSE BASE PANDORA (compatibilidade)
+# ============================================================================
+
+class PANDORA:
+    """
+    Classe base original para compatibilidade
+    """
+    def __init__(self):
+        self.protocols = {}
+        self._load_base_protocols()
+    
+    def _load_base_protocols(self):
+        """Carrega protocolos básicos"""
+        self.protocols = {
+            'heart_attack': "Dor no peito, falta de ar - chamar 192 imediatamente",
+            'bleeding': "Aplicar pressão direta no ferimento",
+            'burn': "Resfriar com água corrente por 20 minutos",
+            'fracture': "Imobilizar sem tentar endireitar",
+            'choking': "5 tapas nas costas + 5 compressões abdominais (Heimlich)"
+        }
+    
+    def get_first_aid_instructions(self, emergency_type: str) -> str:
+        """Retorna instruções de primeiros socorros"""
+        return self.protocols.get(emergency_type.lower(), "Protocolo não encontrado")
+
+# ============================================================================
+# PANDORA ENHANCED ULTIMATE - Sistema Completo
+# ============================================================================
+
+class PANDORAEnhancedUltimate(PANDORA):
+    """
+    Versão Ultimate aprimorada da PANDORA
+    Sistema completo de primeiros socorros offline
+    """
+    
+    def __init__(self, data_dir: str = "./pandora_data"):
+        super().__init__()
+        
+        # Configurações do sistema
+        self.data_dir = data_dir
+        self.user_preferences = {}
+        self.emergency_history = []
+        self.version = "2.0 Ultimate"
+        self.creator = "Alexander Chrysostomo Dias"
+        
+        # Criar diretório de dados se não existir
+        os.makedirs(data_dir, exist_ok=True)
+        
+        # Inicializar todos os módulos
+        self._init_enhanced_protocols()
+        self._init_diagnostic_system()
+        self._init_training_system()
+        self._init_quick_reference()
+        self._init_offline_database()
+        self._init_emergency_contacts()
+        
+        # Carregar histórico se existir
+        self._load_user_data()
+        
+        # Sistema de verificação de integridade
+        self._system_check()
+    
+    # ========================================================================
+    # SISTEMA DE PROTOCOLOS AVANÇADOS
+    # ========================================================================
+    
+    def _init_enhanced_protocols(self):
+        """Carrega todos os protocolos atualizados 2025+"""
+        
+        # Protocolos principais baseados em AHA 2025, Red Cross, e protocolos militares
+        self.PROTOCOLS_2025 = {
+            # PARADA CARDÍACA - Atualizado AHA 2025
+            'cardiac_arrest': {
+                'name': 'Parada Cardíaca',
+                'priority': 'CRÍTICA',
+                'time_sensitive': True,
+                'steps': [
+                    ('1. Verificar segurança', 'Garantir que a cena é segura para aproximação'),
+                    ('2. Verificar resposta', 'Chacoalhar suavemente os ombros e gritar "Você está bem?"'),
+                    ('3. Chamar ajuda', 'Gritar por ajuda, pedir para alguém chamar 192/193 e trazer DEA'),
+                    ('4. Verificar respiração', 'Observar se há respiração normal por no máximo 10 segundos'),
+                    ('5. Iniciar RCP', '30 compressões torácicas (5-6cm profundidade, 100-120/min)'),
+                    ('6. Ventilações', '2 ventilações (1 segundo cada) após cada 30 compressões'),
+                    ('7. Usar DEA', 'Seguir instruções de voz do desfibrilador'),
+                    ('8. Continuar', 'Manter RCP até: sinais de vida, DEA indicar, socorro chegar ou exaustão'),
+                ],
+                'notes': [
+                    'Para leigos: compressões apenas também são eficazes',
+                    'Evite interrupções nas compressões',
+                    'Troque de socorrista a cada 2 minutos se possível',
+                    'Verificar pulso carotídeo apenas se treinado'
+                ],
+                'source': 'AHA Guidelines 2025'
+            },
+            
+            # INFARTO AGUDO DO MIOCÁRDIO
+            'heart_attack': {
+                'name': 'Infarto Cardíaco',
+                'priority': 'CRÍTICA',
+                'time_sensitive': True,
+                'symptoms': [
+                    'Dor ou desconforto no peito (pressão, aperto, queimação)',
+                    'Dor que irradia para braço esquerdo, pescoço, mandíbula ou costas',
+                    'Falta de ar ou dificuldade para respirar',
+                    'Náusea, vômito ou tontura',
+                    'Sudorese fria e palidez',
+                    'Ansiedade extrema ou sensação de morte iminente'
+                ],
+                'steps': [
+                    ('1. Sentar a vítima', 'Posição confortável, semi-sentada'),
+                    ('2. Chamar 192', 'Informar suspeita de infarto imediatamente'),
+                    ('3. Aspirina', 'Se disponível e não alérgico, mastigar 300mg de aspirina'),
+                    ('4. Nitroglicerina', 'Se prescrita, administrar conforme orientação médica'),
+                    ('5. Monitorar', 'Verificar consciência e respiração constantemente'),
+                    ('6. Preparar RCP', 'Se perder consciência e parar de respirar, iniciar RCP')
+                ],
+                'source': 'SBC Guidelines 2024'
+            },
+            
+            # HEMORRAGIA GRAVE
+            'severe_bleeding': {
+                'name': 'Hemorragia Grave',
+                'priority': 'CRÍTICA',
+                'time_sensitive': True,
+                'steps': [
+                    ('1. Proteção', 'Usar luvas se disponível ou criar barreira com plástico/pano'),
+                    ('2. Expor ferida', 'Remover ou cortar roupa para visualizar completamente'),
+                    ('3. Pressão direta', 'Aplicar pressão firme com pano limpo sobre o ferimento'),
+                    ('4. Elevação', 'Elevar o membro acima do nível do coração se possível'),
+                    ('5. Pressão arterial', 'Localizar artéria e comprimir contra osso se necessário'),
+                    ('6. Torniquete', 'Considerar se: hemorragia arterial, múltiplas vítimas, ambiente hostil'),
+                ],
+                'torniquete_protocol': [
+                    'Usar torniquete comercial ou improvisado (cinto, cadarço, tira de pano)',
+                    'Aplicar 5-7cm acima do ferimento (NUNCA sobre articulação)',
+                    'Apertar até parar o sangramento',
+                    'Registrar horário da aplicação',
+                    'NUNCA afrouxar ou remover - apenas profissional médico remove',
+                    'Transportar vítima com torniquete visível'
+                ],
+                'source': 'Combat Life Saver - TCCC'
+            },
+            
+            # TRAUMA CRÂNIO-ENCEFÁLICO
+            'head_trauma': {
+                'name': 'Trauma Craniano',
+                'priority': 'ALTA',
+                'symptoms': [
+                    'Perda de consciência (mesmo que breve)',
+                    'Confusão ou desorientação',
+                    'Náusea ou vômito persistente',
+                    'Pupilas desiguais ou que não reagem à luz',
+                    'Sangramento ou saída de líquido claro pelo nariz/ouvido',
+                    'Convulsões ou movimentos anormais',
+                    'Fraqueza ou dormência em membros'
+                ],
+                'steps': [
+                    ('1. Imobilização', 'Manter cabeça e coluna alinhadas manualmente'),
+                    ('2. Não mover', 'Evitar movimentos desnecessários da cabeça/pescoço'),
+                    ('3. Controle sangramento', 'Pressão leve ao redor (não sobre) ferida na cabeça'),
+                    ('4. Monitorar consciência', 'Usar escala AVPU a cada 5 minutos'),
+                    ('5. Posição lateral', 'Se vomitando e sem suspeita de coluna, colocar em posição lateral'),
+                    ('6. Transporte urgente', 'Necessidade de avaliação por tomografia')
+                ],
+                'avpu_scale': {
+                    'A': 'Alerta - responde normalmente',
+                    'V': 'Voz - responde apenas à voz',
+                    'P': 'Dor - responde apenas a estímulos dolorosos',
+                    'U': 'Sem resposta - não responde a nenhum estímulo'
+                },
+                'source': 'ATLS Protocol 2024'
+            },
+            
+            # AFOGAMENTO
+            'drowning': {
+                'name': 'Afogamento',
+                'priority': 'CRÍTICA',
+                'steps': [
+                    ('1. Segurança do socorrista', 'Não entrar na água sem equipamento ou treinamento'),
+                    ('2. Retirar da água', 'Usar objetos para alcançar ou lançar flutuador'),
+                    ('3. Verificar respiração', 'Colocar em superfície rígida, abrir vias aéreas'),
+                    ('4. Ventilações de resgate', 'Se não respira, dar 5 ventilações iniciais'),
+                    ('5. RCP completa', '30 compressões : 2 ventilações (prioridade para oxigenação)'),
+                    ('6. Aquecimento', 'Remover roupas molhadas, cobrir com cobertor seco'),
+                    ('7. Posição lateral', 'Se recuperar consciência, colocar em posição de recuperação')
+                ],
+                'special_notes': [
+                    'Hipotermia protege o cérebro - não desistir de reanimação precocemente',
+                    'Vômito é comum - estar preparado para limpar vias aéreas',
+                    'Todas as vítimas de afogamento necessitam avaliação hospitalar'
+                ],
+                'source': 'ILCOR 2025'
+            },
+            
+            # QUEIMADURAS GRAVES
+            'severe_burns': {
+                'name': 'Queimaduras Graves',
+                'classification': {
+                    '1º grau': 'Vermelhidão apenas (como queimadura solar)',
+                    '2º grau': 'Bolhas e dor intensa',
+                    '3º grau': 'Pele branca ou carbonizada, pouca dor (terminações nervosas destruídas)'
+                },
+                'steps': [
+                    ('1. Remover fonte', 'Parar o processo de queimadura (apagar chamas, remover químico)'),
+                    ('2. Resfriar', 'Água corrente fria (não gelada) por 20 minutos'),
+                    ('3. Remover objetos', 'Tirar anéis, relógios antes do inchaço'),
+                    ('4. Cobrir', 'Pano limpo úmido ou gaze estéril (não algodão)'),
+                    ('5. Não usar', 'NUNCA usar gelo, manteiga, pasta de dente ou óleo'),
+                    ('6. Hidratar', 'Se consciente e sem náusea, oferecer água em pequenos goles'),
+                    ('7. Choque', 'Monitorar sinais de choque (pulso rápido, palidez)')
+                ],
+                'hospital_criteria': [
+                    'Queimaduras de 3º grau em qualquer tamanho',
+                    'Queimaduras de 2º grau >10% da superfície corporal',
+                    'Queimaduras em face, mãos, pés, genitais ou articulações',
+                    'Queimaduras químicas ou elétricas',
+                    'Vítimas com inalação de fumaça'
+                ],
+                'source': 'ABA Guidelines 2024'
+            },
+            
+            # OVERDOSE DE OPIOIDES
+            'opioid_overdose': {
+                'name': 'Overdose de Opioides',
+                'priority': 'CRÍTICA',
+                'symptoms': [
+                    'Respiração lenta ou ausente (<8 respirações/minuto)',
+                    'Pupilas puntiformes (muito pequenas)',
+                    'Pele pálida, fria e úmida',
+                    'Lábios ou unhas azuladas',
+                    'Roncos ou sons de sufocamento',
+                    'Incapacidade de ser despertado'
+                ],
+                'steps': [
+                    ('1. Chamar ajuda', 'Ligar 192 e informar suspeita de overdose'),
+                    ('2. Verificar respiração', 'Observar, ouvir e sentir por 10 segundos'),
+                    ('3. Ventilações', 'Se respirações <8/min, fornecer ventilações de resgate'),
+                    ('4. Naloxona', 'Administrar spray nasal ou intramuscular se disponível'),
+                    ('5. Posição lateral', 'Se respira sozinho, colocar em posição de recuperação'),
+                    ('6. Monitorar', 'Efeito da naloxona dura 30-90 min - overdose pode retornar')
+                ],
+                'naloxone_administration': [
+                    'Spray nasal: 1 spray em uma narina (4mg)',
+                    'Intramuscular: Aplicar no músculo deltoide ou coxa',
+                    'Repetir após 2-3 minutos se sem resposta',
+                    'Pode ser necessário múltiplas doses em overdoses potentes'
+                ],
+                'source': 'SAMHSA Opioid Response 2024'
+            }
+        }
+        
+        # Protocolos adicionais
+        self.ADDITIONAL_PROTOCOLS = {
+            'diabetic_emergency': self._get_diabetic_protocol(),
+            'stroke': self._get_stroke_protocol(),
+            'allergic_reaction': self._get_allergy_protocol(),
+            'hypothermia': self._get_hypothermia_protocol(),
+            'heat_stroke': self._get_heat_stroke_protocol(),
+            'seizure': self._get_seizure_protocol(),
+            'childbirth': self._get_childbirth_protocol()
+        }
+    
+    def _get_diabetic_protocol(self) -> dict:
+        """Protocolo para emergências diabéticas"""
+        return {
+            'name': 'Emergência Diabética',
+            'hypoglycemia': {
+                'symptoms': ['Confusão', 'Sudorese', 'Tremores', 'Fome intensa', 'Agitação', 'Perda de consciência'],
+                'treatment': [
+                    'Se consciente: açúcar de ação rápida (suco, refrigerante, balas)',
+                    'Repetir após 15 minutos se sem melhora',
+                    'Se inconsciente: NÃO dar nada pela boca',
+                    'Posição lateral de segurança',
+                    'Chamar 192 se sem melhora em 15 minutos'
+                ]
+            },
+            'hyperglycemia': {
+                'symptoms': ['Sede extrema', 'Micção frequente', 'Hálito cetônico (frutado)', 'Náusea', 'Respiração profunda'],
+                'treatment': [
+                    'Monitorar nível de glicose se possível',
+                    'Encaminhar para serviço médico',
+                    'Se consciente: incentivar ingestão de água sem açúcar',
+                    'Não administrar insulina sem prescrição médica'
+                ]
+            }
+        }
+    
+    def _get_stroke_protocol(self) -> dict:
+        """Protocolo para AVC usando escala FAST"""
+        return {
+            'name': 'Acidente Vascular Cerebral',
+            'FAST': {
+                'F': 'Face (rosto caído de um lado)',
+                'A': 'Arm (braço fraco ou incapaz de levantar)',
+                'S': 'Speech (fala arrastada ou estranha)',
+                'T': 'Time (tempo crítico - chamar 192 IMEDIATAMENTE)'
+            },
+            'additional_signs': [
+                'Perda súbita de visão em um ou ambos os olhos',
+                'Dor de cabeça intensa e súbita',
+                'Tontura, perda de equilíbrio ou coordenação',
+                'Confusão ou dificuldade de compreensão'
+            ],
+            'actions': [
+                'Chamar 192 imediatamente (cada minuto conta)',
+                'Anotar hora do início dos sintomas',
+                'Manter vítima confortável e calma',
+                'Não dar comida, bebida ou medicamentos',
+                'Se inconsciente, posição lateral de segurança',
+                'Transporte para hospital com unidade de AVC'
+            ],
+            'time_window': {
+                'trombólise': 'Até 4.5 horas do início dos sintomas',
+                'trombectomia': 'Até 24 horas em casos selecionados'
+            }
+        }
+    
+    def _get_allergy_protocol(self) -> dict:
+        """Protocolo para reação alérgica grave (anafilaxia)"""
+        return {
+            'name': 'Reação Alérgica Grave',
+            'symptoms': [
+                'Dificuldade para respirar ou sibilos',
+                'Inchaço de língua, lábios ou garganta',
+                'Erupção cutânea ou urticária generalizada',
+                'Náusea, vômito ou diarreia',
+                'Tontura ou desmaio',
+                'Sensação de morte iminente'
+            ],
+            'steps': [
+                'Administrar epinefrina (EpiPen) IMEDIATAMENTE se disponível',
+                'Chamar 192 mesmo após administração de epinefrina',
+                'Manher vítima deitada com pernas elevadas (exceto se dificuldade respiratória)',
+                'Segunda dose de epinefrina pode ser necessária após 5-15 minutos',
+                'Não dar anti-histamínicos como tratamento inicial para anafilaxia',
+                'Transporte hospitalar obrigatório (reação bifásica possível)'
+            ],
+            'epinephrine_administration': [
+                'Adultos: 0.3mg intramuscular (EpiPen ou similar)',
+                'Crianças <25kg: 0.15mg intramuscular',
+                'Aplicar na parte externa da coxa (pode ser através da roupa)',
+                'Massagear área por 10 segundos após aplicação',
+                'Efeitos colaterais comuns: taquicardia, tremor, ansiedade'
+            ]
+        }
+    
+    # ========================================================================
+    # SISTEMA DE DIAGNÓSTICO INTELIGENTE
+    # ========================================================================
+    
+    def _init_diagnostic_system(self):
+        """Inicializa sistema de diagnóstico por sintomas"""
+        
+        self.DIAGNOSTIC_TREE = {
+            'root': {
+                'question': 'Qual o principal problema?',
+                'options': {
+                    '1': {'text': 'Problemas respiratórios', 'next': 'breathing'},
+                    '2': {'text': 'Dor ou desconforto no peito', 'next': 'chest_pain'},
+                    '3': {'text': 'Sangramento ou ferimento', 'next': 'bleeding'},
+                    '4': {'text': 'Alteração de consciência', 'next': 'consciousness'},
+                    '5': {'text': 'Trauma ou acidente', 'next': 'trauma'},
+                    '6': {'text': 'Reação alérgica', 'next': 'allergy'},
+                    '7': {'text': 'Queimadura', 'next': 'burns'},
+                    '8': {'text': 'Intoxicação/envenenamento', 'next': 'poisoning'},
+                    '9': {'text': 'Crise convulsiva', 'next': 'seizure'},
+                    '10': {'text': 'Parto/emergência obstétrica', 'next': 'childbirth'}
+                }
+            },
+            
+            'chest_pain': {
+                'question': 'A dor irradia para braço esquerdo, pescoço ou mandíbula?',
+                'options': {
+                    '1': {'text': 'Sim, irradia', 'protocol': 'heart_attack'},
+                    '2': {'text': 'Não irradia', 'question': 'Há falta de ar ou dificuldade para respirar?'},
+                    '3': {'text': 'Não sei', 'protocol': 'heart_attack'}  # Em dúvida, tratar como infarto
+                }
+            },
+            
+            'breathing': {
+                'question': 'A pessoa está conseguindo falar frases completas?',
+                'options': {
+                    '1': {'text': 'Não, apenas palavras soltas', 'priority': 'ALTA'},
+                    '2': {'text': 'Sim, mas com dificuldade', 'priority': 'MÉDIA'},
+                    '3': {'text': 'Não consegue falar', 'protocol': 'choking', 'priority': 'CRÍTICA'}
+                }
+            },
+            
+            'consciousness': {
+                'question': 'A pessoa responde quando você fala com ela?',
+                'options': {
+                    '1': {'text': 'Não responde a nada', 'protocol': 'cardiac_arrest', 'priority': 'CRÍTICA'},
+                    '2': {'text': 'Responde apenas à dor', 'priority': 'ALTA'},
+                    '3': {'text': 'Responde, mas confusa', 'question': 'Há sinais de AVC (face caída, braço fraco)?'}
+                }
+            },
+            
+            'bleeding': {
+                'question': 'O sangramento é em jato pulsátil ou encharca um pano em segundos?',
+                'options': {
+                    '1': {'text': 'Sim, jato ou muito rápido', 'protocol': 'severe_bleeding', 'priority': 'CRÍTICA'},
+                    '2': {'text': 'Não, é lento', 'question': 'O ferimento é grande ou profundo?'}
+                }
+            }
+        }
+        
+        self.diagnostic_state = {
+            'active': False,
+            'current_node': 'root',
+            'history': [],
+            'suspected_protocol': None,
+            'priority_level': None
+        }
+    
+    def start_diagnostic(self, initial_symptom: str = None) -> str:
+        """Inicia modo diagnóstico interativo"""
+        self.diagnostic_state = {
+            'active': True,
+            'current_node': 'root',
+            'history': [],
+            'suspected_protocol': None,
+            'priority_level': None
+        }
+        
+        if initial_symptom:
+            # Mapeia sintoma inicial para nó da árvore
+            symptom_map = {
+                'dor peito': 'chest_pain',
+                'falta ar': 'breathing',
+                'sangrando': 'bleeding',
+                'desmaio': 'consciousness',
+                'queimadura': 'burns',
+                'convulsão': 'seizure'
+            }
+            
+            for key, node in symptom_map.items():
+                if key in initial_symptom.lower():
+                    self.diagnostic_state['current_node'] = node
+                    break
+        
+        return self._get_diagnostic_question()
+    
+    def _get_diagnostic_question(self) -> str:
+        """Retorna a próxima pergunta do diagnóstico"""
+        node = self.DIAGNOSTIC_TREE.get(self.diagnostic_state['current_node'])
+        
+        if not node:
+            return "Diagnóstico não disponível para este sintoma."
+        
+        question = f"\n🔍 DIAGNÓSTICO: {node['question']}\n\n"
+        
+        for key, option in node['options'].items():
+            question += f"{key}. {option['text']}\n"
+        
+        question += "\nDigite o número da opção ou 'sair' para cancelar: "
+        
+        return question
+    
+    def process_diagnostic_answer(self, answer: str) -> Tuple[str, bool]:
+        """
+        Processa resposta do usuário no diagnóstico
+        Retorna: (resposta, diagnóstico_completo)
+        """
+        if not self.diagnostic_state['active']:
+            return "Modo diagnóstico não iniciado.", True
+        
+        node = self.DIAGNOSTIC_TREE.get(self.diagnostic_state['current_node'])
+        
+        if answer.lower() in ['sair', 'exit', 'cancelar']:
+            self.diagnostic_state['active'] = False
+            return "Diagnóstico cancelado.", True
+        
+        option = node['options'].get(answer)
+        
+        if not option:
+            return "Opção inválida. Por favor, digite o número da opção.", False
+        
+        # Registrar no histórico
+        self.diagnostic_state['history'].append({
+            'node': self.diagnostic_state['current_node'],
+            'answer': answer,
+            'text': option['text']
+        })
+        
+        # Verificar se chegou a um protocolo
+        if 'protocol' in option:
+            self.diagnostic_state['suspected_protocol'] = option['protocol']
+            self.diagnostic_state['priority_level'] = option.get('priority', 'MÉDIA')
+            
+            result = self._generate_diagnostic_report()
+            self.diagnostic_state['active'] = False
+            
+            # Registrar no histórico de emergências
+            self._log_emergency(
+                protocol=option['protocol'],
+                priority=option.get('priority', 'MÉDIA'),
+                diagnostic_history=self.diagnostic_state['history']
+            )
+            
+            return result, True
+        
+        # Ir para próxima pergunta
+        elif 'next' in option:
+            self.diagnostic_state['current_node'] = option['next']
+            return self._get_diagnostic_question(), False
+        
+        # Próxima pergunta aninhada
+        elif 'question' in option:
+            follow_up = f"\n📋 {option['question']}\n\n"
+            
+            # Criar opções para pergunta de acompanhamento
+            if 'chest_pain' in self.diagnostic_state['current_node']:
+                follow_up += "1. Sim, há falta de ar\n2. Não, respira normal\n\nDigite 1 ou 2: "
+                self.diagnostic_state['current_node'] = 'chest_pain_followup'
+            elif 'bleeding' in self.diagnostic_state['current_node']:
+                follow_up += "1. Sim, grande ou profundo\n2. Não, pequeno superficial\n\nDigite 1 ou 2: "
+                self.diagnostic_state['current_node'] = 'bleeding_followup'
+            
+            return follow_up, False
+        
+        else:
+            return "Não foi possível determinar o próximo passo.", True
+    
+    def _generate_diagnostic_report(self) -> str:
+        """Gera relatório final do diagnóstico"""
+        protocol = self.diagnostic_state['suspected_protocol']
+        priority = self.diagnostic_state['priority_level']
+        
+        report = f"\n{'='*60}\n"
+        report += "🚨 DIAGNÓSTICO CONCLUÍDO 🚨\n"
+        report += f"{'='*60}\n\n"
+        report += f"PROTOCOLO INDICADO: {protocol.upper()}\n"
+        report += f"PRIORIDADE: {priority}\n\n"
+        
+        report += "📋 HISTÓRICO DE RESPOSTAS:\n"
+        for i, entry in enumerate(self.diagnostic_state['history'], 1):
+            report += f"{i}. {entry['text']}\n"
+        
+        report += f"\n📄 PROTOCOLO COMPLETO:\n"
+        report += self.get_enhanced_protocol(protocol)
+        
+        report += f"\n⏱️ Hora do diagnóstico: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n"
+        
+        return report
+    
+    # ========================================================================
+    # SISTEMA DE TREINAMENTO INTERATIVO
+    # ========================================================================
+    
+    def _init_training_system(self):
+        """Inicializa sistema de treinamento com cenários"""
+        
+        self.TRAINING_SCENARIOS = {
+            'cpr_basico': {
+                'name': 'RCP Básico - Adulto',
+                'description': 'Vítima adulta inconsciente sem respirar',
+                'steps': [
+                    '1. Verifique segurança da cena',
+                    '2. Verifique responsividade (chacoalhe e grite)',
+                    '3. Peça ajuda e peça para trazer DEA',
+                    '4. Abra vias aéreas (inclinação da cabeça)',
+                    '5. Verifique respiração (10 segundos)',
+                    '6. Inicie 30 compressões torácicas',
+                    '7. Faça 2 ventilações',
+                    '8. Continue ciclo 30:2'
+                ],
+                'evaluation': {
+                    'compressao_correta': '5-6cm de profundidade, 100-120/min, recoil completo',
+                    'ventilacao_correta': '1 segundo cada, ver elevação do tórax',
+                    'erros_comuns': [
+                        'Compressões muito rasas',
+                        'Interrupções prolongadas',
+                        'Não permitir recoil completo',
+                        'Hiperventilação'
+                    ]
+                }
+            },
+            
+            'hemorragia': {
+                'name': 'Controle de Hemorragia Grave',
+                'description': 'Ferimento no braço com sangramento arterial',
+                'steps': [
+                    '1. Use luvas ou barreira de proteção',
+                    '2. Exponha completamente o ferimento',
+                    '3. Aplique pressão direta com pano limpo',
+                    '4. Eleve o membro acima do coração',
+                    '5. Se não parar, aplique pressão arterial',
+                    '6. Considere torniquete se sangramento persistente'
+                ],
+                'torniquete_simulation': {
+                    'material': 'Cinto, corda ou tira de pano (5cm largura mínima)',
+                    'localizacao': '5-7cm acima do ferimento, não sobre articulação',
+                    'apertar': 'Até parar sangramento distal',
+                    'tempo': 'Anotar hora da aplicação',
+                    'nao_remover': 'SOMENTE profissional médico remove'
+                }
+            },
+            
+            'avc': {
+                'name': 'Reconhecimento de AVC',
+                'description': 'Homem de 60 anos com fala arrastada',
+                'test_fast': {
+                    'F': 'Peça para sorrir - um lado do rosto está caído?',
+                    'A': 'Peça para levantar ambos braços - um cai ou não sobe?',
+                    'S': 'Peça para repetir uma frase - fala arrastada ou estranha?',
+                    'T': 'Se qualquer sinal positivo - TEMPO DE CHAMAR 192!'
+                },
+                'actions': [
+                    'Chamar 192 imediatamente',
+                    'Anotar hora do início dos sintomas',
+                    'Não dar comida, bebida ou medicamentos',
+                    'Manter vítima calma e confortável',
+                    'Transporte para hospital com unidade de AVC'
+                ]
+            }
+        }
+        
+        self.training_scores = {}
+    
+    def start_training(self, scenario_name: str) -> str:
+        """Inicia um cenário de treinamento"""
+        scenario = self.TRAINING_SCENARIOS.get(scenario_name.lower())
+        
+        if not scenario:
+            available = "\n".join([f"- {s}" for s in self.TRAINING_SCENARIOS.keys()])
+            return f"Cenário não encontrado. Cenários disponíveis:\n{available}"
+        
+        training_text = f"\n🎯 CENÁRIO DE TREINAMENTO: {scenario['name']}\n"
+        training_text += f"📝 Descrição: {scenario['description']}\n\n"
+        training_text += "📋 PROCEDIMENTO RECOMENDADO:\n"
+        
+        for step in scenario.get('steps', []):
+            training_text += f"{step}\n"
+        
+        if 'evaluation' in scenario:
+            training_text += "\n📊 CRITÉRIOS DE AVALIAÇÃO:\n"
+            for key, value in scenario['evaluation'].items():
+                training_text += f"{key.replace('_', ' ').title()}: {value}\n"
+        
+        if 'test_fast' in scenario:
+            training_text += "\n⚡ TESTE FAST PARA AVC:\n"
+            for letter, instruction in scenario['test_fast'].items():
+                training_text += f"{letter}: {instruction}\n"
+        
+        # Adicionar simulação interativa
+        training_text += "\n🎮 MODO PRÁTICO:\n"
+        training_text += "Para simular ações, digite:\n"
+        training_text += "- 'compressor' para prática de compressões\n"
+        training_text += "- 'torniquete' para simular aplicação de torniquete\n"
+        training_text += "- 'avaliar' para testar reconhecimento de sinais\n"
+        training_text += "- 'sair' para terminar treinamento\n"
+        
+        return training_text
+    
+    def simulate_action(self, scenario: str, action: str) -> str:
+        """Simula uma ação específica no treinamento"""
+        
+        if action == 'compressor':
+            return self._simulate_cpr()
+        elif action == 'torniquete':
+            return self._simulate_tourniquet()
+        elif action == 'avaliar':
+            return self._simulate_assessment(scenario)
+        else:
+            return f"Ação '{action}' não reconhecida. Use: compressor, torniquete, avaliar"
+    
+    def _simulate_cpr(self) -> str:
+        """Simula prática de RCP"""
+        import time
+        
+        simulation = "\n💓 SIMULAÇÃO DE RCP:\n"
+        simulation += "Iniciando compressões...\n"
+        simulation += "Meta: 100-120 compressões por minuto\n"
+        simulation += "Profundidade: 5-6cm\n"
+        simulation += "Recoil completo entre compressões\n\n"
+        
+        simulation += "Dica: cante 'Stayin' Alive' dos Bee Gees para manter ritmo\n"
+        simulation += "Ou 'Another One Bites the Dust' (mesmo ritmo, mas menos apropriado!)\n"
+        
+        simulation += "\n⏱️ Pratique por 2 minutos (tempo até socorro chegar):\n"
+        simulation += "Inicie contagem mental ou use cronômetro\n"
+        simulation += "Após 30 compressões, simule 2 ventilações\n"
+        
+        return simulation
+    
+    def _simulate_tourniquet(self) -> str:
+        """Simula aplicação de torniquete"""
+        simulation = "\n🩹 SIMULAÇÃO DE TORNIQUETE:\n"
+        simulation += "Material: use cinto, corda ou tira de pano (mínimo 5cm largura)\n\n"
+        simulation += "PASSOS:\n"
+        simulation += "1. Posicione 5-7cm acima do ferimento (NUNCA sobre articulação)\n"
+        simulation += "2. Enrole firmemente ao redor do membro\n"
+        simulation += "3. Use objeto rígido como tensor (caneta, bastão)\n"
+        simulation += "4. Gire até parar sangramento distal\n"
+        simulation += "5. Fixe tensor no lugar\n"
+        simulation += "6. ANOTE HORÁRIO DA APLICAÇÃO\n"
+        simulation += "7. NUNCA AFROUXE - só profissional médico remove\n\n"
+        
+        simulation += "⚠️ ATENÇÃO: Torniquete salva vidas em hemorragia arterial\n"
+        simulation += "Dor intensa é normal - não afrouxe!\n"
+        
+        return simulation
+    
+    # ========================================================================
+    # REFERÊNCIA RÁPIDA E UTILITÁRIOS
+    # ========================================================================
+    
+    def _init_quick_reference(self):
+        """Inicializa guias de referência rápida"""
+        
+        self.QUICK_GUIDES = {
+            'numeros_emergencia': {
+                '192': 'SAMU - Serviço de Atendimento Móvel de Urgência',
+                '193': 'Bombeiros',
+                '190': 'Polícia Militar',
+                '188': 'CVV - Centro de Valorização da Vida',
+                '199': 'Defesa Civil',
+                '191': 'Polícia Rodoviária Federal'
+            },
+            
+            'avpu': {
+                'A': 'Alerta - Responde normalmente',
+                'V': 'Voz - Responde apenas à voz',
+                'P': 'Dor - Responde apenas à dor',
+                'U': 'Sem resposta - Não responde a nada'
+            },
+            
+            'regra_9': {
+                'Cabeça': '9%',
+                'Cada braço': '9% (total 18%)',
+                'Tronco anterior': '18%',
+                'Tronco posterior': '18%',
+                'Cada perna': '18% (total 36%)',
+                'Genitália': '1%'
+            },
+            
+            'tempos_criticos': {
+                'Parada cardíaca': 'RCP iniciada em <3 minutos',
+                'AVC': 'Hospital em <3 horas para trombolítico',
+                'Infarto': 'Cateterismo em <90 minutos',
+                'Hemorragia': 'Choque irreversível em 30-60 minutos',
+                'Afogamento': 'Reanimação em <10 minutos'
+            },
+            
+            'kit_primeiros_socorros': [
+                'Luvas descartáveis (pelo menos 3 pares)',
+                'Gaze estéril (vários pacotes)',
+                'Ataduras de diferentes tamanhos',
+                'Esparadrapo hipoalergênico',
+                'Tesoura de traumas (arredondada)',
+                'Pinça',
+                'Termômetro digital',
+                'Máscara de RCP',
+                'Soro fisiológico para limpeza',
+                'Álcool em gel',
+                'Analgésicos básicos (paracetamol, ibuprofeno)',
+                'Antisséptico (povidona iodada ou clorexidina)',
+                'Compressas frias instantâneas',
+                'Manta térmica de emergência',
+                'Lanterna com pilhas extras',
+                'Lista de contatos de emergência'
+            ]
+        }
+    
+    def get_quick_reference(self, topic: str) -> str:
+        """Retorna guia de referência rápida"""
+        guide = self.QUICK_GUIDES.get(topic.lower())
+        
+        if not guide:
+            available = "\n".join([f"- {t}" for t in self.QUICK_GUIDES.keys()])
+            return f"Tópico não encontrado. Tópicos disponíveis:\n{available}"
+        
+        output = f"\n📋 REFERÊNCIA RÁPIDA: {topic.upper()}\n\n"
+        
+        if isinstance(guide, dict):
+            for key, value in guide.items():
+                output += f"{key}: {value}\n"
+        elif isinstance(guide, list):
+            for item in guide:
+                output += f"• {item}\n"
+        
+        return output
+    
+    # ========================================================================
+    # BANCO DE DADOS OFFLINE
+    # ========================================================================
+    
+    def _init_offline_database(self):
+        """Inicializa banco de dados local para informações médicas"""
+        
+        self.MEDICAL_DATABASE = {
+            'medicamentos_comuns': {
+                'aspirina': {
+                    'uso_emergencia': 'Infarto cardíaco (mastigar 300mg)',
+                    'contraindicacoes': 'Alergia, úlcera ativa, hemorragia ativa',
+                    'dose': '300-325mg mastigar para infarto'
+                },
+                'paracetamol': {
+                    'uso': 'Febre e dor',
+                    'dose_maxima': '4g/dia (8 comprimidos de 500mg)',
+                    'risco': 'Overdose causa lesão hepática grave'
+                },
+                'ibuprofeno': {
+                    'uso': 'Inflamação, dor, febre',
+                    'contraindicacoes': 'Asma, doença renal, úlcera',
+                    'interacao': 'Evitar com outros AINEs'
+                },
+                'loratadina': {
+                    'uso': 'Alergias leves',
+                    'nao_eficaz': 'Para anafilaxia (usar epinefrina)'
+                }
+            },
+            
+            'doencas_cronicas': {
+                'diabetes': {
+                    'hipoglicemia': 'Açúcar <70mg/dL - tratar com açúcar rápido',
+                    'hiperglicemia': 'Sede, micção frequente - buscar atendimento',
+                    'kit_emergencia': 'Glicosímetro, açúcar rápido, glucagon'
+                },
+                'hipertensao': {
+                    'crise_hipertensiva': 'PA >180/120 com sintomas - buscar atendimento',
+                    'medicamentos': 'NÃO suspender abruptamente'
+                },
+                'asma': {
+                    'ataque_grave': 'Inalar não alivia, fala frases curtas - URGENTE',
+                    'medicamentos': 'Broncodilatador de alívio (azul) sempre à mão'
+                },
+                'epilepsia': {
+                    'durante_convulsao': 'Proteger cabeça, NÃO colocar nada na boca',
+                    'pos_convulsao': 'Posição lateral, recuperação pode levar minutos'
+                }
+            },
+            
+            'faixas_etarias': {
+                'lactente': '0-1 ano',
+                'crianca_pequena': '1-3 anos',
+                'crianca': '4-12 anos',
+                'adolescente': '13-18 anos',
+                'adulto': '19-64 anos',
+                'idoso': '65+ anos'
+            },
+            
+            'vital_signs_normal': {
+                'adulto': {
+                    'frequencia_cardiaca': '60-100 bpm',
+                    'frequencia_respiratoria': '12-20 rpm',
+                    'pressao_arterial': '<120/80 mmHg',
+                    'temperatura': '36.5-37.5°C'
+                },
+                'crianca': {
+                    'frequencia_cardiaca': '70-120 bpm (varia com idade)',
+                    'frequencia_respiratoria': '20-30 rpm',
+                    'pressao_arterial': 'mais baixa que adulto'
+                }
+            }
+        }
+    
+    def search_database(self, term: str) -> str:
+        """Busca informação no banco de dados médico"""
+        term_lower = term.lower()
+        results = []
+        
+        # Buscar em todas as categorias
+        for category, items in self.MEDICAL_DATABASE.items():
+            if isinstance(items, dict):
+                for key, value in items.items():
+                    if term_lower in key.lower():
+                        results.append(f"\n🔍 {category.upper()} - {key.upper()}:")
+                        if isinstance(value, dict):
+                            for k, v in value.items():
+                                results.append(f"   {k}: {v}")
+                        else:
+                            results.append(f"   {value}")
+        
+        if results:
+            return "\n".join(results)
+        else:
+            return f"Nenhum resultado encontrado para '{term}'"
+    
+    # ========================================================================
+    # CONTATOS DE EMERGÊNCIA
+    # ========================================================================
+    
+    def _init_emergency_contacts(self):
+        """Inicializa sistema de contatos de emergência"""
+        
+        self.EMERGENCY_CONTACTS_FILE = os.path.join(self.data_dir, "contacts.json")
+        self.contacts = []
+        
+        # Contatos padrão
+        self.default_contacts = [
+            {'name': 'SAMU', 'number': '192', 'type': 'emergency'},
+            {'name': 'Bombeiros', 'number': '193', 'type': 'emergency'},
+            {'name': 'Polícia', 'number': '190', 'type': 'emergency'},
+            {'name': 'CVV', 'number': '188', 'type': 'support'}
+        ]
+        
+        # Carregar contatos salvos
+        self._load_contacts()
+    
+    def _load_contacts(self):
+        """Carrega contatos do arquivo"""
+        try:
+            if os.path.exists(self.EMERGENCY_CONTACTS_FILE):
+                with open(self.EMERGENCY_CONTACTS_FILE, 'r', encoding='utf-8') as f:
+                    self.contacts = json.load(f)
+            else:
+                self.contacts = self.default_contacts.copy()
+                self._save_contacts()
+        except:
+            self.contacts = self.default_contacts.copy()
+    
+    def _save_contacts(self):
+        """Salva contatos no arquivo"""
+        try:
+            with open(self.EMERGENCY_CONTACTS_FILE, 'w', encoding='utf-8') as f:
+                json.dump(self.contacts, f, ensure_ascii=False, indent=2)
+        except:
+            pass  # Falha silenciosa
+    
+    def add_contact(self, name: str, number: str, contact_type: str = 'personal'):
+        """Adiciona novo contato de emergência"""
+        self.contacts.append({
+            'name': name,
+            'number': number,
+            'type': contact_type,
+            'added': datetime.now().strftime('%d/%m/%Y')
+        })
+        self._save_contacts()
+        return f"Contato '{name}' adicionado com sucesso."
+    
+    def get_contacts(self, contact_type: str = None) -> str:
+        """Retorna lista de contatos"""
+        output = "\n📞 CONTATOS DE EMERGÊNCIA:\n\n"
+        
+        filtered = self.contacts
+        if contact_type:
+            filtered = [c for c in self.contacts if c['type'] == contact_type]
+        
+        for contact in filtered:
+            output += f"• {contact['name']}: {contact['number']}"
+            if 'added' in contact:
+                output += f" (desde {contact['added']})"
+            output += "\n"
+        
+        return output
+    
+    # ========================================================================
+    # FUNÇÕES PRINCIPAIS DA INTERFACE
+    # ========================================================================
+    
+    def get_enhanced_protocol(self, emergency_type: str) -> str:
+        """Retorna protocolo completo para emergência"""
+        
+        # Primeiro verificar nos protocolos principais
+        if emergency_type.lower() in self.PROTOCOLS_2025:
+            prot = self.PROTOCOLS_2025[emergency_type.lower()]
+            return self._format_protocol(prot)
+        
+        # Verificar nos protocolos adicionais
+        if emergency_type.lower() in self.ADDITIONAL_PROTOCOLS:
+            prot = self.ADDITIONAL_PROTOCOLS[emergency_type.lower()]
+            return self._format_protocol(prot)
+        
+        # Fallback para protocolo base
+        base_instructions = super().get_first_aid_instructions(emergency_type)
+        if base_instructions != "Protocolo não encontrado":
+            return f"📋 PROTOCOLO BÁSICO: {emergency_type.upper()}\n\n{base_instructions}"
+        
+        # Se não encontrado em nenhum lugar
+        available = "\n".join([f"- {p}" for p in list(self.PROTOCOLS_2025.keys()) + list(self.ADDITIONAL_PROTOCOLS.keys())])
+        return f"Protocolo '{emergency_type}' não encontrado.\n\nProtocolos disponíveis:\n{available}"
+    
+    def _format_protocol(self, protocol: dict) -> str:
+        """Formata protocolo para exibição"""
+        output = f"\n{'='*60}\n"
+        output += f"🚨 PROTOCOLO: {protocol.get('name', 'Desconhecido').upper()}\n"
+        
+        if 'priority' in protocol:
+            output += f"⚠️ PRIORIDADE: {protocol['priority']}\n"
+        
+        output += f"{'='*60}\n\n"
+        
+        # Sintomas
+        if 'symptoms' in protocol:
+            output += "📋 SINAIS E SINTOMAS:\n"
+            for symptom in protocol['symptoms']:
+                output += f"• {symptom}\n"
+            output += "\n"
+        
+        # Passos de ação
+        if 'steps' in protocol:
+            output += "📝 AÇÕES RECOMENDADAS:\n"
+            for step in protocol['steps']:
+                if isinstance(step, tuple):
+                    output += f"{step[0]}: {step[1]}\n"
+                else:
+                    output += f"• {step}\n"
+            output += "\n"
+        
+        # Informações específicas
+        sections = ['torniquete_protocol', 'avpu_scale', 'special_notes', 
+                   'hospital_criteria', 'naloxone_administration', 'time_window']
+        
+        for section in sections:
+            if section in protocol:
+                output += f"📌 {section.replace('_', ' ').upper()}:\n"
+                if isinstance(protocol[section], dict):
+                    for key, value in protocol[section].items():
+                        output += f"  {key}: {value}\n"
+                elif isinstance(protocol[section], list):
+                    for item in protocol[section]:
+                        output += f"• {item}\n"
+                output += "\n"
+        
+        # Fonte
+        if 'source' in protocol:
+            output += f"📚 Fonte: {protocol['source']}\n"
+        
+        # Timestamp
+        output += f"⏱️ Consultado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n"
+        
+        return output
+    
+    def list_all_protocols(self) -> str:
+        """Lista todos os protocolos disponíveis"""
+        output = "\n📚 TODOS OS PROTOCOLOS DISPONÍVEIS:\n\n"
+        
+        output += "PRINCIPAIS PROTOCOLOS 2025:\n"
+        for key, protocol in self.PROTOCOLS_2025.items():
+            output += f"• {key}: {protocol.get('name', '')}\n"
+        
+        output += "\nPROTOCOLOS ADICIONAIS:\n"
+        for key, protocol in self.ADDITIONAL_PROTOCOLS.items():
+            output += f"• {key}: {protocol.get('name', '')}\n"
+        
+        output += f"\nTotal: {len(self.PROTOCOLS_2025) + len(self.ADDITIONAL_PROTOCOLS)} protocolos\n"
+        
+        return output
+    
+    # ========================================================================
+    # SISTEMA DE HISTÓRICO E DADOS
+    # ========================================================================
+    
+    def _load_user_data(self):
+        """Carrega dados do usuário salvos"""
+        history_file = os.path.join(self.data_dir, "history.json")
+        prefs_file = os.path.join(self.data_dir, "preferences.json")
+        
+        try:
+            if os.path.exists(history_file):
+                with open(history_file, 'r', encoding='utf-8') as f:
+                    self.emergency_history = json.load(f)
+        except:
+            self.emergency_history = []
+        
+        try:
+            if os.path.exists(prefs_file):
+                with open(prefs_file, 'r', encoding='utf-8') as f:
+                    self.user_preferences = json.load(f)
+        except:
+            self.user_preferences = {}
+    
+    def _save_user_data(self):
+        """Salva dados do usuário"""
+        history_file = os.path.join(self.data_dir, "history.json")
+        prefs_file = os.path.join(self.data_dir, "preferences.json")
+        
+        try:
+            with open(history_file, 'w', encoding='utf-8') as f:
+                json.dump(self.emergency_history[-50:], f, ensure_ascii=False, indent=2)  # Salva últimos 50
+        except:
+            pass
+        
+        try:
+            with open(prefs_file, 'w', encoding='utf-8') as f:
+                json.dump(self.user_preferences, f, ensure_ascii=False, indent=2)
+        except:
+            pass
+    
+    def _log_emergency(self, protocol: str, priority: str, diagnostic_history: list = None):
+        """Registra uma consulta de emergência no histórico"""
+        entry = {
+            'timestamp': datetime.now().isoformat(),
+            'protocol': protocol,
+            'priority': priority,
+            'history': diagnostic_history or []
+        }
+        
+        self.emergency_history.append(entry)
+        
+        # Manter histórico limitado
+        if len(self.emergency_history) > 100:
+            self.emergency_history = self.emergency_history[-100:]
+        
+        self._save_user_data()
+    
+    def get_history(self, limit: int = 10) -> str:
+        """Retorna histórico de consultas"""
+        if not self.emergency_history:
+            return "Nenhum histórico registrado."
+        
+        output = "\n📊 HISTÓRICO DE CONSULTAS:\n\n"
+        
+        for i, entry in enumerate(self.emergency_history[-limit:], 1):
+            dt = datetime.fromisoformat(entry['timestamp'])
+            output += f"{i}. {dt.strftime('%d/%m/%Y %H:%M')} - {entry['protocol'].upper()} ({entry['priority']})\n"
+        
+        return output
+    
+    # ========================================================================
+    # VERIFICAÇÃO DO SISTEMA
+    # ========================================================================
+    
+    def _system_check(self) -> bool:
+        """Verifica integridade do sistema"""
+        try:
+            # Verificar protocolos carregados
+            assert len(self.PROTOCOLS_2025) > 0, "Protocolos não carregados"
+            assert len(self.ADDITIONAL_PROTOCOLS) > 0, "Protocolos adicionais não carregados"
+            
+            # Verificar diretório de dados
+            assert os.path.exists(self.data_dir), f"Diretório de dados não existe: {self.data_dir}"
+            
+            # Verificar funcionalidades básicas
+            test_protocol = self.get_enhanced_protocol('cardiac_arrest')
+            assert 'RCP' in test_protocol, "Protocolo de RCP não funcionando"
+            
+            print(f"✅ Sistema PANDORA Enhanced {self.version} carregado com sucesso!")
+            print(f"👤 Criado por: {self.creator}")
+            print(f"📁 Dados salvos em: {os.path.abspath(self.data_dir)}")
+            print(f"📚 Protocolos carregados: {len(self.PROTOCOLS_2025) + len(self.ADDITIONAL_PROTOCOLS)}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"⚠️ Aviso no carregamento: {e}")
+            print("Sistema carregado em modo de segurança.")
+            return False
+    
+    def get_system_info(self) -> str:
+        """Retorna informações do sistema"""
+        info = f"\n{'='*60}\n"
+        info += f"PANDORA ENHANCED ULTIMATE v{self.version}\n"
+        info += f"Criado por: {self.creator}\n"
+        info += f"{'='*60}\n\n"
+        
+        info += "📊 ESTATÍSTICAS DO SISTEMA:\n"
+        info += f"• Protocolos carregados: {len(self.PROTOCOLS_2025) + len(self.ADDITIONAL_PROTOCOLS)}\n"
+        info += f"• Consultas no histórico: {len(self.emergency_history)}\n"
+        info += f"• Contatos salvos: {len(self.contacts)}\n"
+        info += f"• Diretório de dados: {os.path.abspath(self.data_dir)}\n"
+        
+        info += "\n🔧 FUNCIONALIDADES:\n"
+        info += "• Diagnóstico interativo por sintomas\n"
+        info += "• Protocolos atualizados AHA 2025\n"
+        info += "• Treinamento prático com simulação\n"
+        info += "• Banco de dados médico offline\n"
+        info += "• Contatos de emergência personalizáveis\n"
+        info += "• Histórico de consultas automático\n"
+        info += "• Referência rápida de primeiros socorros\n"
+        
+        info += "\n📱 COMPATIBILIDADE:\n"
+        info += "• Funciona totalmente OFFLINE\n"
+        info += "• Compatível com smartphones e computadores\n"
+        info += "• Leve e rápido\n"
+        
+        return info
+
+
+# ============================================================================
+# INTERFACE DE CHAT MELHORADA
+# ============================================================================
+
+class PANDORAChatInterfaceEnhanced:
+    """
+    Interface de chat aprimorada para o sistema PANDORA Enhanced
+    """
+    
+    def __init__(self, data_dir: str = "./pandora_data"):
+        self.pandora = PANDORAEnhancedUltimate(data_dir)
+        self.running = True
+        self.in_diagnostic = False
+        self.in_training = False
+        
+        # Comandos disponíveis
+        self.COMMANDS = {
+            'protocolo': 'Buscar protocolo específico (ex: "protocolo cardiac_arrest")',
+            'diagnostico': 'Iniciar diagnóstico por sintomas',
+            'treinar': 'Iniciar treinamento prático',
+            'lista': 'Listar todos os protocolos disponíveis',
+            'contatos': 'Ver/gerenciar contatos de emergência',
+            'historico': 'Ver histórico de consultas',
+            'buscar': 'Buscar informação no banco de dados',
+            'referencia': 'Guia de referência rápida',
+            'sistema': 'Informações do sistema',
+            'ajuda': 'Mostrar esta ajuda',
+            'sair': 'Encerrar o programa'
+        }
+    
+    def display_welcome(self):
+        """Exibe mensagem de boas-vindas"""
+        welcome = f"""
+{'='*70}
+PANDORA ENHANCED ULTIMATE v{self.pandora.version}
+SISTEMA COMPLETO DE PRIMEIROS SOCORROS OFFLINE
+Criado por: {self.pandora.creator}
+{'='*70}
+
+🚑 Este sistema fornece instruções de primeiros socorros baseadas em 
+protocolos internacionais atualizados (AHA 2025, Red Cross, TCCC).
+
+⚠️ IMPORTANTE:
+• Este sistema NÃO substitui atendimento médico profissional
+• Em emergências reais, CHAME 192 IMEDIATAMENTE
+• Use apenas como guia até a chegada do socorro qualificado
+
+📱 Sistema totalmente offline - funciona sem internet em qualquer dispositivo
+"""
+        print(welcome)
+        print("Digite 'ajuda' para ver todos os comandos disponíveis\n")
+    
+    def display_help(self):
+        """Exibe ajuda dos comandos"""
+        print("\n📋 COMANDOS DISPONÍVEIS:\n")
+        for cmd, desc in self.COMMANDS.items():
+            print(f"  {cmd:15} - {desc}")
+        
+        print("\n📝 EXEMPLOS DE USO:")
+        print("  • protocolo cardiac_arrest")
+        print("  • diagnostico dor no peito")
+        print("  • treinar cpr_basico")
+        print("  • buscar diabetes")
+        print("  • referencia numeros_emergencia")
+        print("  • contatos")
+        print()
+    
+    def process_command(self, user_input: str) -> str:
+        """Processa comando do usuário"""
+        if not user_input.strip():
+            return ""
+        
+        parts = user_input.lower().split()
+        command = parts[0]
+        
+        # Comandos especiais em modo diagnóstico
+        if self.in_diagnostic and command not in ['sair', 'exit', 'cancelar']:
+            result, complete = self.pandora.process_diagnostic_answer(command)
+            if complete:
+                self.in_diagnostic = False
+            return result
+        
+        # Comandos especiais em modo treino
+        if self.in_training and command in ['compressor', 'torniquete', 'avaliar', 'sair']:
+            if command == 'sair':
+                self.in_training = False
+                return "Treinamento encerrado."
+            return self.pandora.simulate_action(self.current_training_scenario, command)
+        
+        # Comandos normais
+        if command == 'sair' or command == 'exit':
+            self.running = False
+            return "Encerrando PANDORA Enhanced. Até logo!"
+        
+        elif command == 'ajuda':
+            self.display_help()
+            return ""
+        
+        elif command == 'protocolo':
+            if len(parts) < 2:
+                return "Digite: protocolo [nome_do_protocolo]\nEx: protocolo cardiac_arrest"
+            protocol_name = " ".join(parts[1:])
+            return self.pandora.get_enhanced_protocol(protocol_name)
+        
+        elif command == 'diagnostico' or command == 'diagnóstico':
+            symptom = " ".join(parts[1:]) if len(parts) > 1 else None
+            self.in_diagnostic = True
+            return self.pandora.start_diagnostic(symptom)
+        
+        elif command == 'treinar' or command == 'treino':
+            if len(parts) < 2:
+                scenarios = "\n".join([f"  • {s}" for s in self.pandora.TRAINING_SCENARIOS.keys()])
+                return f"Digite: treinar [cenario]\nCenários disponíveis:\n{scenarios}"
+            
+            scenario_name = parts[1]
+            self.in_training = True
+            self.current_training_scenario = scenario_name
+            return self.pandora.start_training(scenario_name)
+        
+        elif command == 'lista':
+            return self.pandora.list_all_protocols()
+        
+        elif command == 'contatos':
+            if len(parts) > 1 and parts[1] == 'adicionar':
+                if len(parts) < 4:
+                    return "Uso: contatos adicionar [nome] [numero]"
+                name = parts[2]
+                number = parts[3]
+                return self.pandora.add_contact(name, number)
+            else:
+                return self.pandora.get_contacts()
+        
+        elif command == 'historico' or command == 'histórico':
+            limit = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 10
+            return self.pandora.get_history(limit)
+        
+        elif command == 'buscar':
+            if len(parts) < 2:
+                return "Digite: buscar [termo]\nEx: buscar diabetes, buscar aspirina"
+            term = " ".join(parts[1:])
+            return self.pandora.search_database(term)
+        
+        elif command == 'referencia' or command == 'referência':
+            if len(parts) < 2:
+                topics = "\n".join([f"  • {t}" for t in self.pandora.QUICK_GUIDES.keys()])
+                return f"Digite: referencia [topico]\nTópicos disponíveis:\n{topics}"
+            topic = parts[1]
+            return self.pandora.get_quick_reference(topic)
+        
+        elif command == 'sistema':
+            return self.pandora.get_system_info()
+        
+        else:
+            # Tentar como protocolo direto
+            result = self.pandora.get_enhanced_protocol(user_input)
+            if "não encontrado" not in result.lower():
+                return result
+            
+            return f"Comando não reconhecido: '{user_input}'\nDigite 'ajuda' para ver os comandos disponíveis."
+    
+    def start_conversation(self):
+        """Inicia a interface de conversação"""
+        self.display_welcome()
+        
+        while self.running:
+            try:
+                # Exibir prompt apropriado
+                if self.in_diagnostic:
+                    prompt = "🔍 Diagnóstico > "
+                elif self.in_training:
+                    prompt = "🎯 Treinamento > "
+                else:
+                    prompt = "🚑 PANDORA > "
+                
+                # Obter entrada do usuário
+                user_input = input(prompt).strip()
+                
+                # Processar comando
+                response = self.process_command(user_input)
+                
+                # Exibir resposta
+                if response:
+                    print(response)
+                    
+                    # Linha separadora
+                    if not self.in_diagnostic and not self.in_training:
+                        print("\n" + "-"*50 + "\n")
+                
+            except KeyboardInterrupt:
+                print("\n\nInterrompido pelo usuário.")
+                self.running = False
+            except Exception as e:
+                print(f"\n⚠️ Erro: {e}")
+                print("Digite 'ajuda' para ver os comandos ou 'sair' para encerrar.")
+
+
+# ============================================================================
+# PONTO DE ENTRADA PRINCIPAL
+# ============================================================================
+
+def main():
+    """
+    Função principal para executar o sistema PANDORA Enhanced Ultimate
+    """
+    print("="*70)
+    print("INICIANDO PANDORA ENHANCED ULTIMATE")
+    print("Sistema de Primeiros Socorros Offline Completo")
+    print("="*70)
+    
+    # Verificar se é primeira execução
+    data_dir = "./pandora_data"
+    first_run = not os.path.exists(data_dir)
+    
+    # Criar interface
+    interface = PANDORAChatInterfaceEnhanced(data_dir)
+    
+    # Mensagem de primeira execução
+    if first_run:
+        print("\n🎉 PRIMEIRA EXECUÇÃO DETECTADA!")
+        print("📁 Criando diretório de dados...")
+        print("📚 Carregando banco de protocolos...")
+        print("✅ Sistema pronto para uso offline!\n")
+    
+    # Iniciar interface
+    interface.start_conversation()
+    
+    # Mensagem de encerramento
+    print("\n" + "="*70)
+    print("OBRIGADO POR USAR PANDORA ENHANCED ULTIMATE")
+    print("Criado por: Alexander Chrysostomo Dias")
+    print("Lembre-se: em emergências reais, CHAME 192!")
+    print("="*70)
+
+
+# ============================================================================
+# EXECUÇÃO DIRETA
+# ============================================================================
+
+if __name__ == "__main__":
+    # Verificar se está em ambiente mobile (Android/iOS via Pythonista/etc)
+    try:
+        import android
+        IS_MOBILE = True
+        print("📱 Modo mobile detectado")
+    except:
+        IS_MOBILE = False
+    
+    # Executar sistema
+    main()       'FIRST_DEGREE': {
             'description': 'Queimadura superficial (apenas epiderme)',
             'signs': ['Vermelhidão', 'Dor leve', 'Sem bolhas'],
             'treatment': [
